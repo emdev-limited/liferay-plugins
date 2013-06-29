@@ -2,20 +2,22 @@
 #set ($sidebar_portlet_title = "")
 
 #if (!$layout.isPublicLayout())
-	#set ($sidebar_portlet = "5_WAR_soportlet")
-	#set ($sidebar_portlet_title = $languageUtil.get($locale, "javax.portlet.title.134"))
+	#set ($sidebar_portlet = $propsUtil.get("sidebar-portlets.user.public.portlet"))
+	#set ($sidebar_portlet_title = $languageUtil.get($locale, $propsUtil.get("sidebar-portlets.user.public.title")))
 #else
-	#set ($sidebar_portlet = "3_WAR_contactsportlet")
-	#set ($sidebar_portlet_title = $languageUtil.format($locale, "x's-contacts", $current_user.getFirstName()))
+	#set ($sidebar_portlet = $propsUtil.get("sidebar-portlets.user.private.portlet"))
+	#set ($sidebar_portlet_title = $languageUtil.format($locale, $propsUtil.get("sidebar-portlets.user.private.title"), $current_user.getFirstName()))
 #end
 
-<hr />
+#if ($validator.isNotNull($sidebar_portlet))
+    <hr />
 
-<h3>$htmlUtil.escape($sidebar_portlet_title)</h3>
+    <h3>$htmlUtil.escape($sidebar_portlet_title)</h3>
 
-$velocityPortletPreferences.setValue("displayStyle", "0")
-$velocityPortletPreferences.setValue("portletSetupShowBorders", "false")
+    $velocityPortletPreferences.setValue("displayStyle", "0")
+    $velocityPortletPreferences.setValue("portletSetupShowBorders", "false")
 
-$theme.runtime($sidebar_portlet, "", $velocityPortletPreferences.toString())
+    $theme.runtime($sidebar_portlet, "", $velocityPortletPreferences.toString())
 
-$velocityPortletPreferences.reset()
+    $velocityPortletPreferences.reset()
+#end
