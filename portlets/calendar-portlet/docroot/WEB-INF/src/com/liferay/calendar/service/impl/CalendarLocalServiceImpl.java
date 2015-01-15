@@ -348,11 +348,13 @@ public class CalendarLocalServiceImpl extends CalendarLocalServiceBaseImpl {
 
 		Locale locale = LocaleUtil.getDefault();
 
+		/* do not test for empty name - because if https://issues.liferay.com/browse/LPS-52758
 		String name = nameMap.get(locale);
 
 		if (Validator.isNull(name)) {
 			throw new CalendarNameException();
 		}
+		*/
 	}
 
 }
