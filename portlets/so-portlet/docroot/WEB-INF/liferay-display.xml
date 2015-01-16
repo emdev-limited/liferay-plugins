@@ -8,5 +8,6 @@
 	<category name="category.community">
 		<portlet id="1" />
 		<portlet id="5" />
+		<portlet id="100" />
 	</category>
 </display>
