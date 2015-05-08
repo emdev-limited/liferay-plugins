@@ -42,6 +42,14 @@
 		<add-default-resource>true</add-default-resource>
 		<system>true</system>
 	</portlet>
+
+
+	<portlet>
+		<portlet-name>100</portlet-name>
+		<css-class-wrapper>so-portlet-site-list</css-class-wrapper>
+		<add-default-resource>true</add-default-resource>
+	</portlet>
+	
 	<role-mapper>
 		<role-name>administrator</role-name>
 		<role-link>Administrator</role-link>

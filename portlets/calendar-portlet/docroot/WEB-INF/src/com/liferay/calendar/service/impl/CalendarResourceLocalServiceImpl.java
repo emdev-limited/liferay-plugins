@@ -350,9 +350,13 @@ public class CalendarResourceLocalServiceImpl
 
 		Locale locale = LocaleUtil.getDefault();
 
-		if (nameMap.isEmpty() || Validator.isNull(nameMap.get(locale))) {
+		if (nameMap.isEmpty()) {
 			throw new CalendarResourceNameException();
 		}
+
+		/* do not test for empty name - because if https://issues.liferay.com/browse/LPS-52758
+		 * 
+		 */
 	}
 
 }

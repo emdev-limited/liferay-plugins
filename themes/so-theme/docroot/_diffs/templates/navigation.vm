@@ -51,6 +51,18 @@
 			</li>
 		#end
 	</ul>
+	
+	## Show favorite sites on user profile pages
+	#if ($is_user_dashboard)
+		<h1>
+			<span>#language("sites")</span>
+		</h1>
+		
+		 $velocityPortletPreferences.setValue("portlet-setup-show-borders", "false")
+         $theme.runtime("100_WAR_soportlet", "", $velocityPortletPreferences.toString())
+         $velocityPortletPreferences.reset()
+		
+	#end
 </div>
 
 #if ($show_edit_profile_button)
