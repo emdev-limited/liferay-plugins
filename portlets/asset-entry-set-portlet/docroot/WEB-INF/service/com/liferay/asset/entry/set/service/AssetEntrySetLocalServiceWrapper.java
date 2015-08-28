@@ -312,37 +312,16 @@ public class AssetEntrySetLocalServiceWrapper
 	}
 
 	@Override
-	public com.liferay.asset.entry.set.model.AssetEntrySet fetchAssetEntrySet(
-		long userId, long assetEntrySetId, int childAssetEntrySetsLimit,
-		int likedParticipantsLimit)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return _assetEntrySetLocalService.fetchAssetEntrySet(userId,
-			assetEntrySetId, childAssetEntrySetsLimit, likedParticipantsLimit);
-	}
-
-	@Override
-	public com.liferay.asset.entry.set.model.AssetEntrySet getAssetEntrySet(
-		long userId, long assetEntrySetId, int childAssetEntrySetsLimit,
-		int likedParticipantsLimit)
-		throws com.liferay.portal.kernel.exception.PortalException,
-			com.liferay.portal.kernel.exception.SystemException {
-		return _assetEntrySetLocalService.getAssetEntrySet(userId,
-			assetEntrySetId, childAssetEntrySetsLimit, likedParticipantsLimit);
-	}
-
-	@Override
 	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> getNewAssetEntrySets(
-		long userId, long createTime, long parentAssetEntrySetId,
+		long userId, long time, boolean modifiedTime,
+		long parentAssetEntrySetId,
 		com.liferay.portal.kernel.json.JSONArray sharedToJSONArray,
-		java.lang.String[] assetTagNames, int childAssetEntrySetsLimit,
-		int likedParticipantsLimit, int start, int end)
+		java.lang.String[] assetTagNames, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		return _assetEntrySetLocalService.getNewAssetEntrySets(userId,
-			createTime, parentAssetEntrySetId, sharedToJSONArray,
-			assetTagNames, childAssetEntrySetsLimit, likedParticipantsLimit,
-			start, end);
+		return _assetEntrySetLocalService.getNewAssetEntrySets(userId, time,
+			modifiedTime, parentAssetEntrySetId, sharedToJSONArray,
+			assetTagNames, start, end);
 	}
 
 	@Override
@@ -358,16 +337,15 @@ public class AssetEntrySetLocalServiceWrapper
 
 	@Override
 	public java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> getOldAssetEntrySets(
-		long userId, long createTime, long parentAssetEntrySetId,
+		long userId, long time, boolean modifiedTime,
+		long parentAssetEntrySetId,
 		com.liferay.portal.kernel.json.JSONArray sharedToJSONArray,
-		java.lang.String[] assetTagNames, int childAssetEntrySetsLimit,
-		int likedParticipantsLimit, int start, int end)
+		java.lang.String[] assetTagNames, int start, int end)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		return _assetEntrySetLocalService.getOldAssetEntrySets(userId,
-			createTime, parentAssetEntrySetId, sharedToJSONArray,
-			assetTagNames, childAssetEntrySetsLimit, likedParticipantsLimit,
-			start, end);
+		return _assetEntrySetLocalService.getOldAssetEntrySets(userId, time,
+			modifiedTime, parentAssetEntrySetId, sharedToJSONArray,
+			assetTagNames, start, end);
 	}
 
 	@Override
@@ -383,22 +361,20 @@ public class AssetEntrySetLocalServiceWrapper
 
 	@Override
 	public com.liferay.asset.entry.set.model.AssetEntrySet likeAssetEntrySet(
-		long userId, long assetEntrySetId, int childAssetEntrySetsLimit,
-		int likedParticipantsLimit)
+		long userId, long assetEntrySetId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _assetEntrySetLocalService.likeAssetEntrySet(userId,
-			assetEntrySetId, childAssetEntrySetsLimit, likedParticipantsLimit);
+			assetEntrySetId);
 	}
 
 	@Override
 	public com.liferay.asset.entry.set.model.AssetEntrySet unlikeAssetEntrySet(
-		long userId, long assetEntrySetId, int childAssetEntrySetsLimit,
-		int likedParticipantsLimit)
+		long userId, long assetEntrySetId)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
 		return _assetEntrySetLocalService.unlikeAssetEntrySet(userId,
-			assetEntrySetId, childAssetEntrySetsLimit, likedParticipantsLimit);
+			assetEntrySetId);
 	}
 
 	@Override

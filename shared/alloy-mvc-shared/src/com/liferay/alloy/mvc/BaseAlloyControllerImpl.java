@@ -58,7 +58,6 @@ import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
-import com.liferay.portal.kernel.util.MethodComparator;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.ServiceBeanMethodInvocationFactoryUtil;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -81,10 +80,8 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.StringWriter;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -125,12 +122,6 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	public static final String VIEW_PATH =
 		BaseAlloyControllerImpl.class.getName() + "#VIEW_PATH";
 
-	public BaseAlloyControllerImpl() {
-		if (_lastModified == 0) {
-			_lastModified = System.currentTimeMillis();
-		}
-	}
-
 	@Override
 	public void afterPropertiesSet() {
 		initClass();
@@ -143,53 +134,6 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		initMessageListeners();
 
 		registerAlloyController();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if ((obj == null) || !(obj instanceof BaseAlloyControllerImpl)) {
-			return false;
-		}
-
-		Class<?> clazz = getClass();
-		Class<?> otherClass = obj.getClass();
-
-		Method[] methods = clazz.getDeclaredMethods();
-		Method[] otherMethods = otherClass.getDeclaredMethods();
-
-		if (methods.length != otherMethods.length) {
-			return false;
-		}
-
-		Arrays.sort(methods, new MethodComparator());
-		Arrays.sort(otherMethods, new MethodComparator());
-
-		for (int i = 0; i < methods.length; i++) {
-			Method method = methods[i];
-			Method otherMethod = otherMethods[i];
-
-			if (!Validator.equals(method.getName(), otherMethod.getName())) {
-				return false;
-			}
-
-			Annotation[] annotations = method.getDeclaredAnnotations();
-			Annotation[] otherAnnotations =
-				otherMethod.getDeclaredAnnotations();
-
-			if (annotations.length != otherAnnotations.length) {
-				return false;
-			}
-
-			for (int j = 0; j < annotations.length; j++) {
-				Annotation annotation = annotations[j];
-
-				if (!annotation.equals(otherAnnotations[j])) {
-					return false;
-				}
-			}
-		}
-
-		return true;
 	}
 
 	@Override
@@ -228,9 +172,13 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		}
 	}
 
-	@Override
-	public long getLastModified() {
-		return _lastModified;
+	public BaseModel<?> fetchBaseModel(String className, long classPK)
+		throws Exception {
+
+		AlloyServiceInvoker alloyServiceInvoker = new AlloyServiceInvoker(
+			className);
+
+		return alloyServiceInvoker.fetchModel(classPK);
 	}
 
 	@Override
@@ -344,8 +292,6 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		setModel(baseModel, properties);
 
 		persistModel(baseModel);
-
-		indexModel(baseModel);
 	}
 
 	protected void addOpenerSuccessMessage() {
@@ -367,7 +313,8 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		SessionMessages.add(
 			request,
 			portlet.getPortletId() +
-				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET_DATA, data);
+				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET_DATA,
+			data);
 	}
 
 	protected void addSuccessMessage() {
@@ -1102,6 +1049,17 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	protected AlloySearchResult search(
 			Indexer indexer, AlloyServiceInvoker alloyServiceInvoker,
 			HttpServletRequest request, PortletRequest portletRequest,
+			Map<String, Serializable> attributes, String keywords, Sort[] sorts)
+		throws Exception {
+
+		return search(
+			indexer, alloyServiceInvoker, request, portletRequest, null,
+			attributes, keywords, sorts);
+	}
+
+	protected AlloySearchResult search(
+			Indexer indexer, AlloyServiceInvoker alloyServiceInvoker,
+			HttpServletRequest request, PortletRequest portletRequest,
 			Map<String, Serializable> attributes, String keywords, Sort[] sorts,
 			int start, int end)
 		throws Exception {
@@ -1305,7 +1263,8 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 		SessionMessages.add(
 			request,
 			portlet.getPortletId() +
-				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET_DATA, data);
+				SessionMessages.KEY_SUFFIX_REFRESH_PORTLET_DATA,
+			data);
 	}
 
 	protected void setPermissioned(boolean permissioned) {
@@ -1475,7 +1434,5 @@ public abstract class BaseAlloyControllerImpl implements AlloyController {
 	protected String viewPath;
 
 	private static final String _VIEW_PATH_ERROR = "VIEW_PATH_ERROR";
-
-	private static long _lastModified;
 
 }

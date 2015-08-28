@@ -94,8 +94,8 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 		};
 	public static final String TABLE_SQL_CREATE = "create table SyncDLObject (syncDLObjectId LONG not null primary key,companyId LONG,userId LONG,userName VARCHAR(75) null,createTime LONG,modifiedTime LONG,repositoryId LONG,parentFolderId LONG,name VARCHAR(255) null,extension VARCHAR(75) null,mimeType VARCHAR(75) null,description STRING null,changeLog VARCHAR(75) null,extraSettings TEXT null,version VARCHAR(75) null,versionId LONG,size_ LONG,checksum VARCHAR(75) null,event VARCHAR(75) null,lockExpirationDate DATE null,lockUserId LONG,lockUserName VARCHAR(75) null,type_ VARCHAR(75) null,typePK LONG,typeUuid VARCHAR(75) null)";
 	public static final String TABLE_SQL_DROP = "drop table SyncDLObject";
-	public static final String ORDER_BY_JPQL = " ORDER BY syncDLObject.companyId ASC, syncDLObject.modifiedTime ASC, syncDLObject.repositoryId ASC";
-	public static final String ORDER_BY_SQL = " ORDER BY SyncDLObject.companyId ASC, SyncDLObject.modifiedTime ASC, SyncDLObject.repositoryId ASC";
+	public static final String ORDER_BY_JPQL = " ORDER BY syncDLObject.modifiedTime ASC, syncDLObject.repositoryId ASC";
+	public static final String ORDER_BY_SQL = " ORDER BY SyncDLObject.modifiedTime ASC, SyncDLObject.repositoryId ASC";
 	public static final String DATA_SOURCE = "liferayDataSource";
 	public static final String SESSION_FACTORY = "liferaySessionFactory";
 	public static final String TX_MANAGER = "liferayTransactionManager";
@@ -108,12 +108,13 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 	public static final boolean COLUMN_BITMASK_ENABLED = GetterUtil.getBoolean(com.liferay.util.service.ServiceProps.get(
 				"value.object.column.bitmask.enabled.com.liferay.sync.model.SyncDLObject"),
 			true);
-	public static long COMPANYID_COLUMN_BITMASK = 1L;
+	public static long EVENT_COLUMN_BITMASK = 1L;
 	public static long MODIFIEDTIME_COLUMN_BITMASK = 2L;
-	public static long REPOSITORYID_COLUMN_BITMASK = 4L;
-	public static long TYPE_COLUMN_BITMASK = 8L;
-	public static long TYPEPK_COLUMN_BITMASK = 16L;
-	public static long VERSION_COLUMN_BITMASK = 32L;
+	public static long PARENTFOLDERID_COLUMN_BITMASK = 4L;
+	public static long REPOSITORYID_COLUMN_BITMASK = 8L;
+	public static long TYPE_COLUMN_BITMASK = 16L;
+	public static long TYPEPK_COLUMN_BITMASK = 32L;
+	public static long VERSION_COLUMN_BITMASK = 64L;
 
 	/**
 	 * Converts the soap model instance into a normal model instance.
@@ -418,19 +419,7 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 
 	@Override
 	public void setCompanyId(long companyId) {
-		_columnBitmask = -1L;
-
-		if (!_setOriginalCompanyId) {
-			_setOriginalCompanyId = true;
-
-			_originalCompanyId = _companyId;
-		}
-
 		_companyId = companyId;
-	}
-
-	public long getOriginalCompanyId() {
-		return _originalCompanyId;
 	}
 
 	@JSON
@@ -535,7 +524,19 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 
 	@Override
 	public void setParentFolderId(long parentFolderId) {
+		_columnBitmask |= PARENTFOLDERID_COLUMN_BITMASK;
+
+		if (!_setOriginalParentFolderId) {
+			_setOriginalParentFolderId = true;
+
+			_originalParentFolderId = _parentFolderId;
+		}
+
 		_parentFolderId = parentFolderId;
+	}
+
+	public long getOriginalParentFolderId() {
+		return _originalParentFolderId;
 	}
 
 	@JSON
@@ -711,7 +712,17 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 
 	@Override
 	public void setEvent(String event) {
+		_columnBitmask |= EVENT_COLUMN_BITMASK;
+
+		if (_originalEvent == null) {
+			_originalEvent = _event;
+		}
+
 		_event = event;
+	}
+
+	public String getOriginalEvent() {
+		return GetterUtil.getString(_originalEvent);
 	}
 
 	@JSON
@@ -893,20 +904,6 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 	public int compareTo(SyncDLObject syncDLObject) {
 		int value = 0;
 
-		if (getCompanyId() < syncDLObject.getCompanyId()) {
-			value = -1;
-		}
-		else if (getCompanyId() > syncDLObject.getCompanyId()) {
-			value = 1;
-		}
-		else {
-			value = 0;
-		}
-
-		if (value != 0) {
-			return value;
-		}
-
 		if (getModifiedTime() < syncDLObject.getModifiedTime()) {
 			value = -1;
 		}
@@ -969,10 +966,6 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 	public void resetOriginalValues() {
 		SyncDLObjectModelImpl syncDLObjectModelImpl = this;
 
-		syncDLObjectModelImpl._originalCompanyId = syncDLObjectModelImpl._companyId;
-
-		syncDLObjectModelImpl._setOriginalCompanyId = false;
-
 		syncDLObjectModelImpl._originalModifiedTime = syncDLObjectModelImpl._modifiedTime;
 
 		syncDLObjectModelImpl._setOriginalModifiedTime = false;
@@ -981,7 +974,13 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 
 		syncDLObjectModelImpl._setOriginalRepositoryId = false;
 
+		syncDLObjectModelImpl._originalParentFolderId = syncDLObjectModelImpl._parentFolderId;
+
+		syncDLObjectModelImpl._setOriginalParentFolderId = false;
+
 		syncDLObjectModelImpl._originalVersion = syncDLObjectModelImpl._version;
+
+		syncDLObjectModelImpl._originalEvent = syncDLObjectModelImpl._event;
 
 		syncDLObjectModelImpl._originalType = syncDLObjectModelImpl._type;
 
@@ -1313,8 +1312,6 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 		};
 	private long _syncDLObjectId;
 	private long _companyId;
-	private long _originalCompanyId;
-	private boolean _setOriginalCompanyId;
 	private long _userId;
 	private String _userUuid;
 	private String _userName;
@@ -1326,6 +1323,8 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 	private long _originalRepositoryId;
 	private boolean _setOriginalRepositoryId;
 	private long _parentFolderId;
+	private long _originalParentFolderId;
+	private boolean _setOriginalParentFolderId;
 	private String _name;
 	private String _extension;
 	private String _mimeType;
@@ -1338,6 +1337,7 @@ public class SyncDLObjectModelImpl extends BaseModelImpl<SyncDLObject>
 	private long _size;
 	private String _checksum;
 	private String _event;
+	private String _originalEvent;
 	private Date _lockExpirationDate;
 	private long _lockUserId;
 	private String _lockUserUuid;

@@ -16,29 +16,32 @@
 
 <%@ include file="/init.jsp" %>
 
-<div class="loading-animation">
-	<iframe class="hide-accessible" frameborder="0" id="<portlet:namespace />frame" name="<portlet:namespace />frame" scrolling="no" src="about:blank"></iframe>
-</div>
+<%
+String remoteMVCPath = "/marketplace/view.jsp";
 
-<form action="<%= iFrameURL %>" id="<portlet:namespace />fm" method="post" target="<portlet:namespace />frame">
-<input name="referer" type="hidden" value="<%= referer %>" />
-<input name="mpClientURL" type="hidden" value="<%= themeDisplay.getPortalURL() + themeDisplay.getURLCurrent() %>" />
-</form>
+String portletId = portletDisplay.getId();
 
-<div class="alert alert-error hide time-out-message">
-	<liferay-ui:message key="could-not-connect-to-the-liferay-marketplace" />
-</div>
+if (portletId.equals(PortletKeys.PURCHASED)) {
+	remoteMVCPath = "/marketplace_server/view_purchased.jsp";
+}
+%>
 
-<aui:script use="aui-base,aui-io,liferay-marketplace-messenger,liferay-marketplace-util">
+<liferay-portlet:renderURL var="viewURL" windowState="<%= LiferayWindowState.EXCLUSIVE.toString() %>">
+	<portlet:param name="remoteMVCPath" value="<%= remoteMVCPath %>" />
+</liferay-portlet:renderURL>
+
+<iframe frameborder="0" id="<portlet:namespace />frame" name="<portlet:namespace />frame" scrolling="no" src="<%= viewURL %>"></iframe>
+
+<c:if test="<%= GetterUtil.getBoolean(request.getAttribute(WebKeys.OAUTH_AUTHORIZED)) %>">
+	<div class="sign-out">
+		<liferay-portlet:actionURL name="deauthorize" var="deauthorizeURL" />
+
+		<aui:button onClick="<%= deauthorizeURL %>" value="sign-out" />
+	</div>
+</c:if>
+
+<aui:script use="liferay-marketplace-messenger">
 	var frame = A.one('#<portlet:namespace />frame');
-
-	var timeout = setTimeout(
-		function() {
-			frame.ancestor().removeClass('loading-animation');
-			A.one('.time-out-message').show();
-		},
-		120000
-	);
 
 	Liferay.MarketplaceMessenger.init(
 		{
@@ -54,77 +57,25 @@
 				return;
 			}
 
-			if (response.cmd == 'init') {
-				clearTimeout(timeout);
+			var data = response.data;
 
-				frame.removeClass('hide-accessible');
-
-				frame.ancestor().removeClass('loading-animation');
-
-				Liferay.MarketplaceMessenger.setTargetURI(response.serverURL);
-
-				if (response.height) {
-					frame.height(response.height + 50);
+			if ((response.cmd == 'resize') || (response.cmd == 'init')) {
+				if (data.height) {
+					frame.height(data.height + 50);
 				}
 
-				if (response.width) {
-					frame.width(response.width);
-				}
-
-				Liferay.MarketplaceMessenger.postMessage(
-					{
-						message: 'success',
-						supportsHotDeploy: <%= ServerDetector.isSupportsHotDeploy() %>
-					}
-				);
-			}
-			else if (response.cmd == 'goto') {
-				var url = null;
-
-				if (response.panel === 'control-panel') {
-					url = '<%= themeDisplay.getURLControlPanel() %>';
-				}
-				else {
-					url = '<liferay-portlet:renderURL doAsGroupId="<%= themeDisplay.getScopeGroupId() %>" portletName="<%= portletId.equals(PortletKeys.STORE) ? PortletKeys.MY_MARKETPLACE : PortletKeys.STORE %>" windowState="<%= WindowState.MAXIMIZED.toString() %>" />';
-
-					if (response.appId) {
-						url = Liferay.Util.addParams('<%= PortalUtil.getPortletNamespace(PortletKeys.STORE) %>appId=' + response.appId, url);
-					}
-				}
-
-				window.location = url;
-			}
-			else if (response.cmd == 'resize') {
-				if (response.height) {
-					frame.height(response.height + 50);
-				}
-
-				if (response.width) {
-					frame.width(response.width);
+				if (data.width) {
+					frame.width(data.width);
 				}
 			}
-			else {
-				var data = Liferay.MarketplaceUtil.namespaceObject('<portlet:namespace />', response);
 
-				A.io.request(
-					'<portlet:actionURL />',
-					{
-						data: data,
-						dataType: 'JSON',
-						method: 'POST',
-						on: {
-							success: function(event, id, obj) {
-								var response = this.get('responseData');
+			if ((response.cmd == 'scrollTo') || (response.cmd == 'init')) {
+				var scrollX = data.scrollX || 0;
+				var scrollY = data.scrollY || 0;
 
-								Liferay.MarketplaceMessenger.postMessage(response);
-							}
-						}
-					}
-				);
+				window.scrollTo(scrollX, scrollY);
 			}
 		},
 		A.Lang.emptyFnTrue
 	);
-
-	A.one('#<portlet:namespace />fm').submit();
 </aui:script>

@@ -40,6 +40,18 @@ public class AssetEntrySetFinderUtil {
 			assetTagNames, start, end);
 	}
 
+	public static java.util.List<com.liferay.asset.entry.set.model.AssetEntrySet> findByMT_PAESI_CNI(
+		long classNameId, long classPK, long modifiedTime,
+		boolean gtModifiedTime, long parentAssetEntrySetId,
+		com.liferay.portal.kernel.json.JSONArray sharedToJSONArray,
+		java.lang.String[] assetTagNames, int start, int end)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder()
+				   .findByMT_PAESI_CNI(classNameId, classPK, modifiedTime,
+			gtModifiedTime, parentAssetEntrySetId, sharedToJSONArray,
+			assetTagNames, start, end);
+	}
+
 	public static AssetEntrySetFinder getFinder() {
 		if (_finder == null) {
 			_finder = (AssetEntrySetFinder)PortletBeanLocatorUtil.locate(com.liferay.asset.entry.set.service.ClpSerializer.getServletContextName(),

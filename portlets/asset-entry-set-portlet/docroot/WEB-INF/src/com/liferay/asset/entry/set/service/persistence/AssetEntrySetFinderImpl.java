@@ -55,6 +55,9 @@ public class AssetEntrySetFinderImpl
 	public static final String FIND_BY_CT_PAESI_CNI =
 		AssetEntrySetFinder.class.getName() + ".findByCT_PAESI_CNI";
 
+	public static final String FIND_BY_MT_PAESI_CNI =
+		AssetEntrySetFinder.class.getName() + ".findByMT_PAESI_CNI";
+
 	public static final String JOIN_BY_ASSET_SHARING_ENTRY =
 		AssetEntrySetFinder.class.getName() + ".joinByAssetSharingEntry";
 
@@ -159,6 +162,71 @@ public class AssetEntrySetFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			qPos.add(createTime);
+			qPos.add(parentAssetEntrySetId);
+			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
+
+			setAssetTagNames(qPos, assetTagNames);
+
+			return (List<AssetEntrySet>)QueryUtil.list(
+				q, getDialect(), start, end);
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	public List<AssetEntrySet> findByMT_PAESI_CNI(
+			long classNameId, long classPK, long modifiedTime,
+			boolean gtModifiedTime, long parentAssetEntrySetId,
+			JSONArray sharedToJSONArray, String[] assetTagNames, int start,
+			int end)
+		throws SystemException {
+
+		if (((sharedToJSONArray == null) ||
+			 (sharedToJSONArray.length() == 0)) &&
+			ArrayUtil.isEmpty(assetTagNames)) {
+
+			return Collections.emptyList();
+		}
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			String sql = CustomSQLUtil.get(FIND_BY_MT_PAESI_CNI);
+
+			sql = StringUtil.replace(
+				sql, "[$JOIN_BY$]",
+				getJoinBy(sharedToJSONArray, assetTagNames));
+
+			if (gtModifiedTime) {
+				sql = StringUtil.replace(
+					sql, "[$MODIFIED_TIME_COMPARATOR$]", ">");
+			}
+			else {
+				sql = StringUtil.replace(
+					sql, "[$MODIFIED_TIME_COMPARATOR$]", "<=");
+			}
+
+			sql = StringUtil.replace(
+				sql, "[$SHARED_TO$]",
+				getSharedTo(classNameId, classPK, sharedToJSONArray));
+			sql = StringUtil.replace(
+				sql, "[$ASSET_TAG_NAMES$]",
+				getAssetTagNames(
+					classNameId, classPK, sharedToJSONArray, assetTagNames));
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addEntity("AssetEntrySet", AssetEntrySetImpl.class);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(modifiedTime);
 			qPos.add(parentAssetEntrySetId);
 			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
 

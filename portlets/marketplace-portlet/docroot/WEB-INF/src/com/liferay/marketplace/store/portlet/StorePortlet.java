@@ -14,26 +14,26 @@
 
 package com.liferay.marketplace.store.portlet;
 
+import com.liferay.compat.portal.kernel.util.HttpUtil;
 import com.liferay.marketplace.model.App;
+import com.liferay.marketplace.oauth.util.OAuthUtil;
 import com.liferay.marketplace.service.AppLocalServiceUtil;
 import com.liferay.marketplace.service.AppServiceUtil;
 import com.liferay.marketplace.util.MarketplaceLicenseUtil;
 import com.liferay.marketplace.util.MarketplaceUtil;
 import com.liferay.marketplace.util.PortletPropsValues;
+import com.liferay.marketplace.util.WebKeys;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.FileUtil;
-import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.model.User;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.expando.service.ExpandoValueLocalServiceUtil;
-import com.liferay.util.bridges.mvc.MVCPortlet;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,11 +47,15 @@ import java.util.Set;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 import javax.portlet.PortletException;
+import javax.portlet.RenderRequest;
+import javax.portlet.RenderResponse;
+
+import org.scribe.model.Token;
 
 /**
  * @author Ryan Park
  */
-public class StorePortlet extends MVCPortlet {
+public class StorePortlet extends RemoteMVCPortlet {
 
 	public void downloadApp(
 			ActionRequest actionRequest, ActionResponse actionResponse)
@@ -179,29 +183,6 @@ public class StorePortlet extends MVCPortlet {
 		jsonObject.put("message", "success");
 
 		writeJSON(actionRequest, actionResponse, jsonObject);
-	}
-
-	@Override
-	public void processAction(
-			ActionRequest actionRequest, ActionResponse actionResponse)
-		throws IOException {
-
-		try {
-			if (!isProcessActionRequest(actionRequest)) {
-				return;
-			}
-
-			if (!callActionMethod(actionRequest, actionResponse)) {
-				return;
-			}
-		}
-		catch (PortletException pe) {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
-
-			jsonObject.put("message", "fail");
-
-			writeJSON(actionRequest, actionResponse, jsonObject);
-		}
 	}
 
 	public void uninstallApp(
@@ -374,6 +355,33 @@ public class StorePortlet extends MVCPortlet {
 		return true;
 	}
 
+	@Override
+	protected void doDispatch(
+			RenderRequest renderRequest, RenderResponse renderResponse)
+		throws IOException, PortletException {
+
+		try {
+			ThemeDisplay themeDisplay =
+				(ThemeDisplay)renderRequest.getAttribute(WebKeys.THEME_DISPLAY);
+
+			Token accessToken = OAuthUtil.getAccessToken(
+				themeDisplay.getUser());
+
+			if (accessToken == null) {
+				include("/store/login.jsp", renderRequest, renderResponse);
+
+				return;
+			}
+		}
+		catch (Exception pe) {
+			throw new PortletException(pe);
+		}
+
+		renderRequest.setAttribute(WebKeys.OAUTH_AUTHORIZED, Boolean.TRUE);
+
+		super.doDispatch(renderRequest, renderResponse);
+	}
+
 	protected JSONObject getAppJSONObject(long remoteAppId) throws Exception {
 		JSONObject jsonObject = JSONFactoryUtil.createJSONObject();
 
@@ -402,15 +410,27 @@ public class StorePortlet extends MVCPortlet {
 		String encodedClientId = MarketplaceUtil.encodeClientId(
 			companyId, userId, token);
 
+		String serverNamespace = PortalUtil.getPortletNamespace(
+			getServerPortletId());
+
 		url = HttpUtil.addParameter(
-			url, _PORTLET_NAMESPACE.concat("clientId"), encodedClientId);
+			url, serverNamespace.concat("clientId"), encodedClientId);
 		url = HttpUtil.addParameter(
-			url, _PORTLET_NAMESPACE.concat("token"), token);
+			url, serverNamespace.concat("token"), token);
 
 		return url;
 	}
 
-	private static final String _PORTLET_NAMESPACE =
-		PortalUtil.getPortletNamespace("12_WAR_osbportlet");
+	@Override
+	protected String getServerPortletId() {
+		return _OSB_PORTLET_ID;
+	}
+
+	@Override
+	protected String getServerPortletURL() {
+		return PortletPropsValues.MARKETPLACE_URL + "/osb-portlet/mp_server";
+	}
+
+	private static final String _OSB_PORTLET_ID = "12_WAR_osbportlet";
 
 }

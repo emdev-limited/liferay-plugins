@@ -47,6 +47,7 @@ import com.liferay.portal.util.PortalUtil;
 import com.liferay.util.ContentUtil;
 import com.liferay.util.bridges.mvc.MVCPortlet;
 
+import java.text.DateFormat;
 import java.text.Format;
 
 import java.util.ArrayList;
@@ -266,9 +267,8 @@ public class NotificationsPortlet extends MVCPortlet {
 
 		try {
 			int newUserNotificationsCount =
-				UserNotificationEventLocalServiceUtil.
-					getDeliveredUserNotificationEventsCount(
-						themeDisplay.getUserId(), false);
+				NotificationsUtil.getDeliveredUserNotificationEventsCount(
+					themeDisplay.getUserId(), false);
 
 			jsonObject.put(
 				"newUserNotificationsCount", newUserNotificationsCount);
@@ -277,9 +277,8 @@ public class NotificationsPortlet extends MVCPortlet {
 				"timestamp", String.valueOf(System.currentTimeMillis()));
 
 			int unreadUserNotificationsCount =
-				UserNotificationEventLocalServiceUtil.
-					getArchivedUserNotificationEventsCount(
-						themeDisplay.getUserId(), false);
+				NotificationsUtil.getArchivedUserNotificationEventsCount(
+					themeDisplay.getUserId(), false);
 
 			jsonObject.put(
 				"unreadUserNotificationsCount", unreadUserNotificationsCount);
@@ -448,11 +447,6 @@ public class NotificationsPortlet extends MVCPortlet {
 		String portletName = portlet.getDisplayName();
 		String portletIcon = portlet.getContextPath() + portlet.getIcon();
 
-		Format simpleDateFormat =
-			FastDateFormatFactoryUtil.getSimpleDateFormat(
-				"EEEE, MMMMM dd, yyyy 'at' h:mm a", themeDisplay.getLocale(),
-				themeDisplay.getTimeZone());
-
 		JSONObject userNotificationEventJSONObject =
 			JSONFactoryUtil.createJSONObject(
 				userNotificationEvent.getPayload());
@@ -470,6 +464,16 @@ public class NotificationsPortlet extends MVCPortlet {
 			userPortraitURL = user.getPortraitURL(themeDisplay);
 		}
 
+		Format dateFormatDate =
+			FastDateFormatFactoryUtil.getDate(
+				DateFormat.FULL, themeDisplay.getLocale(),
+				themeDisplay.getTimeZone());
+
+		Format dateTimeFormat =
+			FastDateFormatFactoryUtil.getDateTime(
+				DateFormat.FULL, DateFormat.SHORT, themeDisplay.getLocale(),
+				themeDisplay.getTimeZone());
+
 		return StringUtil.replace(
 			ContentUtil.get(PortletPropsValues.USER_NOTIFICATION_ENTRY),
 			new String[] {
@@ -482,8 +486,9 @@ public class NotificationsPortlet extends MVCPortlet {
 				markAsReadIcon, portletIcon, portletName,
 				Time.getRelativeTimeDescription(
 					userNotificationEvent.getTimestamp(),
-					themeDisplay.getLocale(), themeDisplay.getTimeZone()),
-				simpleDateFormat.format(userNotificationEvent.getTimestamp()),
+					themeDisplay.getLocale(), themeDisplay.getTimeZone(),
+					dateFormatDate),
+				dateTimeFormat.format(userNotificationEvent.getTimestamp()),
 				userFullName, userPortraitURL});
 	}
 
