@@ -87,6 +87,7 @@ public class CalendarBookingExportActionableDynamicQuery
 
 		Property workflowStatusProperty = PropertyFactoryUtil.forName("status");
 
+		//MRC-6 fix NoSuchMethodError: com.liferay.portal.kernel.lar.PortletDataContext.isInitialPublication()
 		/*if (_portletDataContext.isInitialPublication()) {
 			dynamicQuery.add(workflowStatusProperty.ne(
 					WorkflowConstants.STATUS_IN_TRASH));
