@@ -47,13 +47,21 @@ int startTimeDay = ParamUtil.getInteger(request, "startTimeDay", startTimeJCalen
 int startTimeHour = ParamUtil.getInteger(request, "startTimeHour", startTimeJCalendar.get(java.util.Calendar.HOUR_OF_DAY));
 int startTimeMinute = ParamUtil.getInteger(request, "startTimeMinute", startTimeJCalendar.get(java.util.Calendar.MINUTE));
 
+int startTimeAmPm = ParamUtil.getInteger(request, "startTimeAmPm");
+
+if (startTimeAmPm == java.util.Calendar.PM) {
+	startTimeHour += 12;
+}
+
 startTimeJCalendar = CalendarFactoryUtil.getCalendar(startTimeYear, startTimeMonth, startTimeDay, startTimeHour, startTimeMinute, 0, 0, calendarBookingTimeZone);
+
+startTimeJCalendar.setFirstDayOfWeek(weekStartsOn + 1);
 
 startTime = startTimeJCalendar.getTimeInMillis();
 
 java.util.Calendar defaultEndTimeJCalendar = (java.util.Calendar)nowJCalendar.clone();
 
-defaultEndTimeJCalendar.add(java.util.Calendar.HOUR, 1);
+defaultEndTimeJCalendar.add(java.util.Calendar.MINUTE, defaultDuration);
 
 long endTime = BeanPropertiesUtil.getLong(calendarBooking, "endTime", defaultEndTimeJCalendar.getTimeInMillis());
 
@@ -65,7 +73,15 @@ int endTimeDay = ParamUtil.getInteger(request, "endTimeDay", endTimeJCalendar.ge
 int endTimeHour = ParamUtil.getInteger(request, "endTimeHour", endTimeJCalendar.get(java.util.Calendar.HOUR_OF_DAY));
 int endTimeMinute = ParamUtil.getInteger(request, "endTimeMinute", endTimeJCalendar.get(java.util.Calendar.MINUTE));
 
+int endTimeAmPm = ParamUtil.getInteger(request, "endTimeAmPm");
+
+if (endTimeAmPm == java.util.Calendar.PM) {
+	endTimeHour += 12;
+}
+
 endTimeJCalendar = CalendarFactoryUtil.getCalendar(endTimeYear, endTimeMonth, endTimeDay, endTimeHour, endTimeMinute, 0, 0, calendarBookingTimeZone);
+
+endTimeJCalendar.setFirstDayOfWeek(weekStartsOn + 1);
 
 endTime = endTimeJCalendar.getTimeInMillis();
 
@@ -162,6 +178,7 @@ for (long otherCalendarId : otherCalendarIds) {
 	<aui:input name="updateCalendarBookingInstance" type="hidden" />
 
 	<liferay-ui:error exception="<%= CalendarBookingDurationException.class %>" message="please-enter-a-start-date-that-comes-before-the-end-date" />
+	<liferay-ui:error exception="<%= CalendarBookingRecurrenceException.class %>" message="the-last-repeating-date-should-come-after-the-event-start-date" />
 
 	<liferay-ui:asset-categories-error />
 
@@ -173,11 +190,11 @@ for (long otherCalendarId : otherCalendarIds) {
 		<aui:input defaultLanguageId="<%= themeDisplay.getLanguageId() %>" name="title" />
 
 		<div class="<%= allDay ? "allday-class-active" : "" %>" id="<portlet:namespace />startDateContainer">
-			<aui:input firstDayOfWeek="<%= weekStartsOn %>" ignoreRequestValue="<%= true %>" label="start-date" name="startTime" value="<%= startTimeJCalendar %>" />
+			<aui:input ignoreRequestValue="<%= true %>" label="start-date" name="startTime" value="<%= startTimeJCalendar %>" />
 		</div>
 
 		<div class="<%= allDay ? "allday-class-active" : "" %>" id="<portlet:namespace />endDateContainer">
-			<aui:input firstDayOfWeek="<%= weekStartsOn %>" ignoreRequestValue="<%= true %>" label="end-date" name="endTime" value="<%= endTimeJCalendar %>" />
+			<aui:input ignoreRequestValue="<%= true %>" label="end-date" name="endTime" value="<%= endTimeJCalendar %>" />
 		</div>
 
 		<aui:input checked="<%= allDay %>" name="allDay" />

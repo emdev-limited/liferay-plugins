@@ -18,6 +18,8 @@ import com.liferay.asset.entry.set.model.AssetEntrySet;
 import com.liferay.asset.entry.set.model.AssetEntrySetReference;
 import com.liferay.asset.entry.set.model.impl.AssetEntrySetImpl;
 import com.liferay.asset.entry.set.util.AssetEntrySetParticipantInfoUtil;
+import com.liferay.asset.sharing.model.AssetSharingEntry;
+import com.liferay.asset.sharing.service.AssetSharingEntryLocalServiceUtil;
 import com.liferay.compat.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -54,6 +56,9 @@ public class AssetEntrySetFinderImpl
 
 	public static final String FIND_BY_CT_PAESI_CNI =
 		AssetEntrySetFinder.class.getName() + ".findByCT_PAESI_CNI";
+
+	public static final String FIND_BY_MT_PAESI_CNI =
+		AssetEntrySetFinder.class.getName() + ".findByMT_PAESI_CNI";
 
 	public static final String JOIN_BY_ASSET_SHARING_ENTRY =
 		AssetEntrySetFinder.class.getName() + ".joinByAssetSharingEntry";
@@ -113,12 +118,14 @@ public class AssetEntrySetFinderImpl
 	public List<AssetEntrySet> findByCT_PAESI_CNI(
 			long classNameId, long classPK, long createTime,
 			boolean gtCreateTime, long parentAssetEntrySetId,
-			JSONArray sharedToJSONArray, String[] assetTagNames, int start,
+			JSONArray sharedToJSONArray, long[] includeAssetEntrySetIds,
+			long[] excludeAssetEntrySetIds, String[] assetTagNames, int start,
 			int end)
 		throws SystemException {
 
 		if (((sharedToJSONArray == null) ||
 			 (sharedToJSONArray.length() == 0)) &&
+			ArrayUtil.isEmpty(includeAssetEntrySetIds) &&
 			ArrayUtil.isEmpty(assetTagNames)) {
 
 			return Collections.emptyList();
@@ -151,6 +158,13 @@ public class AssetEntrySetFinderImpl
 				sql, "[$ASSET_TAG_NAMES$]",
 				getAssetTagNames(
 					classNameId, classPK, sharedToJSONArray, assetTagNames));
+			sql = StringUtil.replace(
+				sql, "[$INCLUDE_ASSET_ENTRY_SET_IDS$]",
+				getIncludeAssetEntrySetIds(
+					classNameId, classPK, includeAssetEntrySetIds));
+			sql = StringUtil.replace(
+				sql, "[$EXCLUDE_ASSET_ENTRY_SET_IDS$]",
+				getExcludeAssetEntrySetIds(excludeAssetEntrySetIds));
 
 			SQLQuery q = session.createSQLQuery(sql);
 
@@ -159,6 +173,80 @@ public class AssetEntrySetFinderImpl
 			QueryPos qPos = QueryPos.getInstance(q);
 
 			qPos.add(createTime);
+			qPos.add(parentAssetEntrySetId);
+			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
+
+			setAssetTagNames(qPos, assetTagNames);
+
+			return (List<AssetEntrySet>)QueryUtil.list(
+				q, getDialect(), start, end);
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	public List<AssetEntrySet> findByMT_PAESI_CNI(
+			long classNameId, long classPK, long modifiedTime,
+			boolean gtModifiedTime, long parentAssetEntrySetId,
+			JSONArray sharedToJSONArray, long[] includeAssetEntrySetIds,
+			long[] excludeAssetEntrySetIds, String[] assetTagNames, int start,
+			int end)
+		throws SystemException {
+
+		if (((sharedToJSONArray == null) ||
+			 (sharedToJSONArray.length() == 0)) &&
+			ArrayUtil.isEmpty(includeAssetEntrySetIds) &&
+			ArrayUtil.isEmpty(assetTagNames)) {
+
+			return Collections.emptyList();
+		}
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			String sql = CustomSQLUtil.get(FIND_BY_MT_PAESI_CNI);
+
+			sql = StringUtil.replace(
+				sql, "[$JOIN_BY$]",
+				getJoinBy(sharedToJSONArray, assetTagNames));
+
+			if (gtModifiedTime) {
+				sql = StringUtil.replace(
+					sql, "[$MODIFIED_TIME_COMPARATOR$]", ">");
+			}
+			else {
+				sql = StringUtil.replace(
+					sql, "[$MODIFIED_TIME_COMPARATOR$]", "<=");
+			}
+
+			sql = StringUtil.replace(
+				sql, "[$SHARED_TO$]",
+				getSharedTo(classNameId, classPK, sharedToJSONArray));
+			sql = StringUtil.replace(
+				sql, "[$ASSET_TAG_NAMES$]",
+				getAssetTagNames(
+					classNameId, classPK, sharedToJSONArray, assetTagNames));
+			sql = StringUtil.replace(
+				sql, "[$INCLUDE_ASSET_ENTRY_SET_IDS$]",
+				getIncludeAssetEntrySetIds(
+					classNameId, classPK, includeAssetEntrySetIds));
+			sql = StringUtil.replace(
+				sql, "[$EXCLUDE_ASSET_ENTRY_SET_IDS$]",
+				getExcludeAssetEntrySetIds(excludeAssetEntrySetIds));
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addEntity("AssetEntrySet", AssetEntrySetImpl.class);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			qPos.add(modifiedTime);
 			qPos.add(parentAssetEntrySetId);
 			qPos.add(_ASSET_ENTRY_SET_CLASS_NAME_ID);
 
@@ -197,6 +285,62 @@ public class AssetEntrySetFinderImpl
 		}
 
 		sb.setIndex(sb.index() - 1);
+
+		return sb.toString();
+	}
+
+	protected String getExcludeAssetEntrySetIds(long[] assetEntrySetIds) {
+		if (ArrayUtil.isEmpty(assetEntrySetIds)) {
+			return StringPool.BLANK;
+		}
+
+		StringBundler sb = new StringBundler((assetEntrySetIds.length * 2) + 3);
+
+		sb.append(" AND ");
+		sb.append("(AssetEntrySet.assetEntrySetId NOT IN (");
+
+		for (long assetEntrySetId : assetEntrySetIds) {
+			sb.append(assetEntrySetId);
+			sb.append(StringPool.COMMA);
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		sb.append("))");
+
+		return sb.toString();
+	}
+
+	protected String getIncludeAssetEntrySetIds(
+			long classNameId, long classPK, long[] assetEntrySetIds)
+		throws SystemException {
+
+		if (ArrayUtil.isEmpty(assetEntrySetIds)) {
+			return StringPool.BLANK;
+		}
+
+		StringBundler sb = new StringBundler((assetEntrySetIds.length * 7) + 3);
+
+		sb.append(" OR ");
+		sb.append(StringPool.OPEN_PARENTHESIS);
+
+		for (long assetEntrySetId : assetEntrySetIds) {
+			sb.append("((AssetEntrySet.assetEntrySetId = ");
+			sb.append(assetEntrySetId);
+			sb.append(StringPool.CLOSE_PARENTHESIS);
+
+			if (!isMember(classNameId, classPK, assetEntrySetId)) {
+				sb.append(" AND ");
+				sb.append(getViewable(classNameId, classPK));
+			}
+
+			sb.append(StringPool.CLOSE_PARENTHESIS);
+			sb.append(" OR ");
+		}
+
+		sb.setIndex(sb.index() - 1);
+
+		sb.append(StringPool.CLOSE_PARENTHESIS);
 
 		return sb.toString();
 	}
@@ -284,6 +428,27 @@ public class AssetEntrySetFinderImpl
 		sb.append(")))");
 
 		return sb.toString();
+	}
+
+	protected boolean isMember(
+			long classNameId, long classPK, long assetEntrySetId)
+		throws SystemException {
+
+		List<AssetSharingEntry> assetSharingEntries =
+			AssetSharingEntryLocalServiceUtil.getAssetSharingEntries(
+				_ASSET_ENTRY_SET_CLASS_NAME_ID, assetEntrySetId);
+
+		for (AssetSharingEntry assetSharingEntry : assetSharingEntries) {
+			if (AssetEntrySetParticipantInfoUtil.isMember(
+					classNameId, classPK,
+					assetSharingEntry.getSharedToClassNameId(),
+					assetSharingEntry.getSharedToClassPK())) {
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	protected void setAssetTagNames(QueryPos qPos, String[] assetTagNames) {

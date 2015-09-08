@@ -32,6 +32,7 @@ import com.liferay.knowledgebase.model.KBArticleConstants;
 import com.liferay.knowledgebase.model.KBFolder;
 import com.liferay.knowledgebase.model.KBFolderConstants;
 import com.liferay.knowledgebase.service.KBArticleLocalServiceUtil;
+import com.liferay.knowledgebase.service.KBArticleServiceUtil;
 import com.liferay.knowledgebase.service.base.KBArticleLocalServiceBaseImpl;
 import com.liferay.knowledgebase.util.KnowledgeBaseConstants;
 import com.liferay.knowledgebase.util.KnowledgeBaseUtil;
@@ -821,19 +822,16 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 		}
 
 		if (status == WorkflowConstants.STATUS_ANY) {
-			return kbArticlePersistence.findByG_P_S_L(
-				groupId, KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, array,
-				true, start, end, orderByComparator);
+			return kbArticlePersistence.findByG_S_L(
+				groupId, array, true, start, end, orderByComparator);
 		}
 		else if (status == WorkflowConstants.STATUS_APPROVED) {
-			return kbArticlePersistence.findByG_P_S_M(
-				groupId, KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, array,
-				true, start, end, orderByComparator);
+			return kbArticlePersistence.findByG_S_M(
+				groupId, array, true, start, end, orderByComparator);
 		}
 
-		return kbArticlePersistence.findByG_P_S_S(
-			groupId, KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, array, status,
-			start, end, orderByComparator);
+		return kbArticlePersistence.findByG_S_S(
+			groupId, array, status, start, end, orderByComparator);
 	}
 
 	@Override
@@ -848,18 +846,13 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 		}
 
 		if (status == WorkflowConstants.STATUS_ANY) {
-			return kbArticlePersistence.countByG_P_S_L(
-				groupId, KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, array,
-				true);
+			return kbArticlePersistence.countByG_S_L(groupId, array, true);
 		}
 		else if (status == WorkflowConstants.STATUS_APPROVED) {
-			return kbArticlePersistence.countByG_P_S_M(
-				groupId, KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, array,
-				true);
+			return kbArticlePersistence.countByG_S_M(groupId, array, true);
 		}
 
-		return kbArticlePersistence.countByG_P_S_S(
-			groupId, KBFolderConstants.DEFAULT_PARENT_FOLDER_ID, array, status);
+		return kbArticlePersistence.countByG_S_S(groupId, array, status);
 	}
 
 	/**
@@ -978,6 +971,22 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 				resourcePrimKey, AdminActivityKeys.MOVE_KB_ARTICLE,
 				extraDataJSONObject.toString(), 0);
 		}
+	}
+
+	@Override
+	public KBArticle revertKBArticle(
+			long userId, long resourcePrimKey, int version,
+			ServiceContext serviceContext)
+		throws PortalException, SystemException {
+
+		KBArticle kbArticle = KBArticleServiceUtil.getKBArticle(
+			resourcePrimKey, version);
+
+		return updateKBArticle(
+			userId, resourcePrimKey, kbArticle.getTitle(),
+			kbArticle.getContent(), kbArticle.getDescription(),
+			kbArticle.getSourceURL(), StringUtil.split(kbArticle.getSections()),
+			null, null, serviceContext);
 	}
 
 	@Override
