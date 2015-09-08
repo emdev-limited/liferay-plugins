@@ -171,7 +171,8 @@
 								postMessage = LanguageUtil.format(pageContext, "write-on-x-wall", HtmlUtil.escape(wallUser.getFirstName()), false);
 							}
 
-							String postHREF = themeDisplay.getPathFriendlyURLPublic() + StringPool.SLASH + wallUser.getScreenName() + wallLayoutFriendlyURL + "/-/wall";
+							// EMDEV - actually here we should search public user page to find, there is wall portlet placed. But in our case we simple go to main public page.							
+							String postHREF = wallUser.getDisplayURL(themeDisplay);;
 							%>
 
 							<liferay-ui:icon
